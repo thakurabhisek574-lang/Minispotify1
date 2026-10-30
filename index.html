@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0B0D1A">
+  <meta name="description" content="My music: a simple music player built with HTML, CSS and JavaScript.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='6' fill='%230B0D1A'/%3E%3Cpath d='M9 17V7.5l8-1.6V15' fill='none' stroke='%234DE3F2' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3Ccircle cx='7' cy='17' r='2' fill='%234DE3F2'/%3E%3Ccircle cx='15' cy='15' r='2' fill='%234DE3F2'/%3E%3C/svg%3E">
+  <title>My Music</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --ink: #0B0D1A;
+      --surface: #141730;
+      --line: rgba(255, 255, 255, 0.08);
+      --text: #F2F4FF;
+      --muted: #9AA0C4;
+      --accent: #4DE3F2;
+      --violet: #8B7BFF;
+      --heart: #FF6B8B;
+      --ink-on-accent: #06122A;
+      --grad: linear-gradient(135deg, #4DE3F2 0%, #8B7BFF 100%);
+      --font: "Sora", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; }
+    html { -webkit-text-size-adjust: 100%; }
+
+    body {
+      margin: 0;
+      min-height: 100dvh;
+      background:
+        radial-gradient(120% 60% at 50% -10%, #1B2050 0%, rgba(27, 32, 80, 0) 60%),
+        var(--ink);
+      background-attachment: fixed;
+      color: var(--text);
+      font-family: var(--font);
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+
+    .glow { position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
+    .glow::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to bottom, rgba(11, 13, 26, 0.25) 0%, var(--ink) 78%);
+    }
+    .glow i {
+      position: absolute;
+      inset: -20%;
+      background-size: cover;
+      background-position: center;
+      filter: blur(54px) saturate(1.6);
+      opacity: 0;
+      transition: opacity 1s ease;
+    }
+    .glow i.on { opacity: 0.5; }
+
+    .page {
+      position: relative;
+      z-index: 1;
+      width: min(100%, 640px);
+      margin: 0 auto;
+      padding: calc(36px + env(safe-area-inset-top, 0px)) 16px calc(40px + env(safe-area-inset-bottom, 0px));
+    }
+
+    .greeting { margin: 0; font-size: 14px; color: var(--muted); }
+    h1 { margin: 6px 0 0; font-size: 30px; line-height: 1.1; font-weight: 800; letter-spacing: -0.03em; }
+
+    .hero-card {
+      position: relative;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 128px;
+      align-items: center;
+      gap: 8px;
+      margin-top: 28px;
+      padding: 22px 16px 22px 22px;
+      overflow: hidden;
+      color: inherit;
+      text-decoration: none;
+      background: linear-gradient(135deg, rgba(77, 227, 242, 0.2), rgba(139, 123, 255, 0.18) 60%, rgba(20, 23, 48, 0.9));
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 26px;
+      box-shadow: 0 24px 50px -24px rgba(77, 227, 242, 0.45);
+      transition: transform 0.15s, box-shadow 0.3s;
+    }
+    .hero-card:active { transform: scale(0.985); }
+    .hero-title { margin: 0; font-size: 22px; font-weight: 700; letter-spacing: -0.02em; }
+    .hero-desc { margin: 8px 0 18px; font-size: 14px; line-height: 1.5; color: var(--muted); }
+    .open-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      height: 42px;
+      padding: 0 18px;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--ink-on-accent);
+      background: var(--grad);
+      border-radius: 999px;
+    }
+    .open-pill svg { width: 16px; height: 16px; fill: currentColor; }
+
+    .stack { position: relative; width: 128px; height: 110px; }
+    .sc {
+      position: absolute;
+      top: 12px;
+      display: grid;
+      place-items: center;
+      width: 78px;
+      height: 78px;
+      overflow: hidden;
+      background: linear-gradient(135deg, #3B3F8F, #1C2040);
+      border-radius: 16px;
+      box-shadow: 0 14px 26px -8px rgba(0, 0, 0, 0.6);
+      transition: transform 0.4s var(--ease);
+    }
+    .sc img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+    .sc:nth-child(1) { left: 0; transform: rotate(-12deg); }
+    .sc:nth-child(2) { left: 24px; top: 4px; z-index: 2; }
+    .sc:nth-child(3) { left: 48px; transform: rotate(12deg); }
+    .hero-card:hover .sc:nth-child(1) { transform: rotate(-16deg) translateX(-4px); }
+    .hero-card:hover .sc:nth-child(3) { transform: rotate(16deg) translateX(4px); }
+
+    .sec { margin: 30px 4px 12px; font-size: 14px; font-weight: 600; color: var(--muted); }
+    .sec[hidden], .resume[hidden] { display: none; }
+
+    .resume {
+      display: grid;
+      grid-template-columns: 64px minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 14px;
+      padding: 12px 16px 12px 12px;
+      color: inherit;
+      text-decoration: none;
+      background: rgba(20, 23, 48, 0.78);
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      transition: background 0.2s, transform 0.15s;
+    }
+    .resume:hover { background: rgba(28, 32, 64, 0.9); }
+    .resume:active { transform: scale(0.985); }
+    .r-cover {
+      position: relative;
+      display: grid;
+      place-items: center;
+      width: 64px;
+      height: 64px;
+      overflow: hidden;
+      background: linear-gradient(135deg, #3B3F8F, #1C2040);
+      border-radius: 14px;
+    }
+    .r-cover img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+    .r-text { min-width: 0; }
+    .r-title, .r-artist { display: block; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+    .r-title { font-size: 16px; font-weight: 600; letter-spacing: -0.01em; }
+    .r-artist { margin-top: 3px; font-size: 13px; color: var(--muted); }
+    .r-bar { height: 4px; margin-top: 12px; overflow: hidden; background: rgba(255, 255, 255, 0.12); border-radius: 2px; }
+    .r-bar i { display: block; width: 0; height: 100%; background: var(--grad); border-radius: 2px; transition: width 0.6s var(--ease); }
+    .r-play {
+      display: grid;
+      place-items: center;
+      width: 44px;
+      height: 44px;
+      color: var(--ink-on-accent);
+      background: var(--grad);
+      border-radius: 50%;
+    }
+    .r-play svg { width: 18px; height: 18px; fill: currentColor; }
+
+    .tile {
+      display: grid;
+      grid-template-columns: 48px minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 14px;
+      padding: 12px 16px 12px 12px;
+      color: inherit;
+      text-decoration: none;
+      background: rgba(20, 23, 48, 0.78);
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      transition: background 0.2s, transform 0.15s;
+    }
+    .tile:hover { background: rgba(28, 32, 64, 0.9); }
+    .tile:active { transform: scale(0.985); }
+    .t-icon {
+      display: grid;
+      place-items: center;
+      width: 48px;
+      height: 48px;
+      color: var(--heart);
+      background: rgba(255, 107, 139, 0.14);
+      border-radius: 14px;
+    }
+    .t-icon svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+    .t-title { display: block; font-size: 16px; font-weight: 600; }
+    .t-sub { display: block; margin-top: 3px; font-size: 13px; color: var(--muted); }
+    .t-go { width: 20px; height: 20px; color: var(--muted); fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+    .credits { margin-top: 44px; padding-top: 18px; border-top: 1px solid var(--line); text-align: center; }
+    .credits p { margin: 0; font-size: 12px; line-height: 1.7; color: var(--muted); }
+    .credits a { color: var(--text); font-weight: 600; text-decoration: underline; text-decoration-color: rgba(255, 255, 255, 0.3); text-underline-offset: 3px; }
+    .credits a:hover { color: var(--accent); }
+
+    .rise { animation: rise 0.65s var(--ease) both; animation-delay: calc(var(--i, 0) * 80ms + 80ms); }
+    @keyframes rise { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation: none !important; transition-duration: 0.01ms !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="glow" aria-hidden="true"><i id="glow"></i></div>
+
+  <main class="page">
+    <header class="rise" style="--i: 0">
+      <p class="greeting" id="greeting">Welcome</p>
+      <h1>My Music</h1>
+    </header>
+
+    <a class="hero-card rise" style="--i: 1" href="songs-1 (2).html" aria-label="Open My Playlist">
+      <div>
+        <h2 class="hero-title">My Playlist</h2>
+        <p class="hero-desc">All your favorite songs in one place.</p>
+        <span class="open-pill">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.5-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5Z"/></svg>
+          Open playlist
+        </span>
+      </div>
+      <div class="stack" id="stack" aria-hidden="true"></div>
+    </a>
+
+    <h2 class="sec rise" style="--i: 2" id="resumeSec" hidden>Continue listening</h2>
+    <a class="resume rise" style="--i: 3" id="resume" href="songs-1 (2).html" hidden>
+      <span class="r-cover" id="rCover"></span>
+      <span class="r-text">
+        <span class="r-title" id="rTitle"></span>
+        <span class="r-artist" id="rArtist"></span>
+        <span class="r-bar"><i id="rBar"></i></span>
+      </span>
+      <span class="r-play" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.5-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5Z"/></svg>
+      </span>
+    </a>
+
+    <h2 class="sec rise" style="--i: 4">Quick access</h2>
+    <a class="tile rise" style="--i: 5" href="songs-1 (2).html">
+      <span class="t-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
+      </span>
+      <span>
+        <span class="t-title">Favorites</span>
+        <span class="t-sub" id="favSub">Songs you saved</span>
+      </span>
+      <svg class="t-go" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>
+    </a>
+
+    <footer class="credits rise" style="--i: 6">
+      <p>Music provided by <a href="https://ncs.io" target="_blank" rel="noopener noreferrer">NoCopyrightSounds</a></p>
+      <p>All songs belong to their artists and NCS.</p>
+    </footer>
+  </main>
+
+  <script>
+    (() => {
+      "use strict";
+
+      const tracks = [
+        { title: "Sky High",  artist: "Elektronomia", cover: "image/img1.jpg", src: "audio/song5.mp4" },
+        { title: "On and On", artist: "Cartoon, Jéja feat. Daniel Levi", cover: "image/img3.png", src: "audio/song6.mp4" },
+        { title: "Invisible", artist: "Julius Dreisig & Zeus X Crona", cover: "image/img2.png", src: "audio/song3.mp4" }
+      ];
+
+      const NOTE = '<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="rgba(255,255,255,.55)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18V6.5l10-2V16"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="16.5" cy="16" r="2.5"/></svg>';
+      const $ = (id) => document.getElementById(id);
+      const fmt = (s) => Math.floor(s / 60) + ":" + String(Math.floor(s % 60)).padStart(2, "0");
+
+      document.addEventListener("error", (e) => {
+        if (e.target && e.target.tagName === "IMG") e.target.remove();
+      }, true);
+
+      const hour = new Date().getHours();
+      $("greeting").textContent =
+        hour >= 5 && hour < 12 ? "Good morning" :
+        hour >= 12 && hour < 17 ? "Good afternoon" :
+        hour >= 17 && hour < 22 ? "Good evening" : "Good night";
+
+      $("stack").innerHTML = tracks.slice(0, 3).map((t) =>
+        '<span class="sc">' + NOTE + '<img src="' + t.cover + '" alt=""></span>'
+      ).join("");
+
+      let saved = null;
+      let favs = [];
+      try { saved = JSON.parse(localStorage.getItem("songs.state") || "null"); } catch (e) {}
+      try { favs = JSON.parse(localStorage.getItem("songs.favs") || "[]"); } catch (e) {}
+
+      const favCount = tracks.filter((t) => favs.includes(t.src)).length;
+      $("favSub").textContent = favCount
+        ? favCount + (favCount === 1 ? " song saved" : " songs saved")
+        : "Save songs from the three-dot menu";
+
+      if (saved && Number.isInteger(saved.current) && tracks[saved.current]) {
+        const t = tracks[saved.current];
+        $("resumeSec").hidden = false;
+        $("resume").hidden = false;
+        $("rCover").innerHTML = NOTE + '<img src="' + t.cover + '" alt="">';
+        $("rTitle").textContent = t.title;
+        $("rArtist").textContent = t.artist;
+        $("resume").setAttribute("aria-label", "Continue listening to " + t.title + " by " + t.artist);
+
+        const glow = $("glow");
+        glow.style.backgroundImage = 'url("' + t.cover + '")';
+        requestAnimationFrame(() => glow.classList.add("on"));
+
+        const probe = new Audio();
+        probe.preload = "metadata";
+        probe.addEventListener("loadedmetadata", () => {
+          if (probe.duration > 0) {
+            const pct = Math.min(100, ((saved.time || 0) / probe.duration) * 100);
+            $("rBar").style.width = pct + "%";
+            $("rArtist").textContent = t.artist + " \u2022 paused at " + fmt(saved.time || 0);
+          }
+        });
+        probe.src = t.src;
+      }
+    })();
+  </script>
+</body>
+</html>
