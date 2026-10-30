@@ -10,4 +10,4 @@ A premium and fully functional web music player built with HTML, CSS, and vanill
 ## Credits & Copyright 📝
 * Music tracks and covers are provided by **NoCopyrightSounds (NCS)**.
 * This project is built strictly for **educational and personal portfolio purposes**.
-* 
+  
